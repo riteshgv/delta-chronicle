@@ -21,9 +21,9 @@ jobs:
         run: docker compose build test
 
       - name: Run unit tests
-        run: docker-compose run --rm test
+        run: docker compose run --rm test
 
       - name: Check code formatting
         run: |
-          docker-compose run --rm dev \
+          docker compose run --rm dev \
             python3 -m black --check delta_chronicle/
