@@ -28,6 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: delta-chronicle-test
+    entrypoint: ""
     volumes:
       - .:/app
     environment:
