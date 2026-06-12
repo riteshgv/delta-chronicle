@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+
+  # ── Main development environment ─────────────────────────────
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: delta-chronicle-dev
+    entrypoint: ""
+    volumes:
+      # Mount source code so edits on Windows reflect instantly inside container
+      - .:/app
+      # Persist Delta tables between container runs
+      - delta-data:/app/demo/nyc_taxi/delta
+    environment:
+      - SPARK_LOCAL_IP=127.0.0.1
+      - PYTHONPATH=/app
+      - PYSPARK_PYTHON=python3
+    stdin_open: true
+    tty: true
+    command: bash
+
+  # ── Test runner ────────────────────────────────────────────
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: delta-chronicle-test
+    volumes:
+      - .:/app
+    environment:
+      - SPARK_LOCAL_IP=127.0.0.1
+      - PYTHONPATH=/app
+      - PYSPARK_PYTHON=python3
+    command: python3 -m pytest tests/unit/ -v --tb=short --cov=delta_chronicle --cov-report=term-missing
+
+  # ── Pipeline runner ────────────────────────────────────────
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: delta-chronicle-pipeline
+    volumes:
+      - .:/app
+      - delta-data:/app/demo/nyc_taxi/delta
+    environment:
+      - SPARK_LOCAL_IP=127.0.0.1
+      - PYTHONPATH=/app
+      - PYSPARK_PYTHON=python3
+    command: python3 demo/nyc_taxi/pipeline.py
+
+volumes:
+  delta-data:
