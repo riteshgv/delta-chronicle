@@ -80,6 +80,19 @@ services:
       - PYTHONPATH=/app
       - PYSPARK_PYTHON=python3
     command: python3 demo/nyc_taxi/chronicle_demo.py
+  explore:
+    build: .
+    container_name: delta-chronicle-explore
+    entrypoint: ""
+    volumes:
+      - .:/app
+      - delta-data:/app/demo/nyc_taxi/delta
+    environment:
+      - SPARK_LOCAL_IP=127.0.0.1
+      - SPARK_HOME=/opt/spark
+      - PYTHONPATH=/app:/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.7-src.zip
+      - PYSPARK_PYTHON=python3
+    command: python3 demo/nyc_taxi/explore_cdf.py
 
 volumes:
   delta-data:
