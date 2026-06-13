@@ -1,18 +1,22 @@
-# delta-chronicle
+## Status
 
-> Cross-table temporal causality engine for Delta Lake
+| Component | Status | Week | Notes |
+|---|---|---|---|
+| ChronicleGraph | Done | 1 | DAG registration, traversal, cycle detection |
+| BlastRadiusAnalyzer | Done | 1 | Forward taint with real Spark row counts |
+| CausalityTracer structural | Done | 1 | Topology-based fallback |
+| CausalityTracer CDF | Done | 2 | Real timestamp correlation algorithm |
+| Lineage path finder | Done | 2 | BFS source-to-target path |
+| Cycle detection | Done | 2 | DFS validate() check |
+| Integration tests | Done | 2 | Real Spark + Delta, 17 tests |
+| Interactive UI | Planned | 6 | React + D3 timeline + blast radius graph |
+| GDPR propagator | Planned | 3 | Cascading forget() across DAG |
+| PyPI release | Planned | 8 | pip install delta-chronicle |
 
-[![CI](https://github.com/riteshgv/delta-chronicle/actions/workflows/ci.yml/badge.svg)](https://github.com/riteshgv/delta-chronicle/actions)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
+## Test Coverage
 
-**Delta Lake shows you *that* your data changed.  
-delta-chronicle shows you *which upstream table caused it*.**
-
-```
-gold.driver_revenue  ← revenue wrong since Jan 15
-       ↑
-silver.trip_enriched ← reprocessed with bad data  
-       ↑
-bronze.taxi_trips    ← 🔴 ROOT CAUSE: vendor_id=1 fares ×10
+| Suite | Tests | Runner |
+|---|---|---|
+| Unit (no Spark) | 32 | docker compose run --rm test |
+| Integration (real Spark) | 17 | docker compose run --rm test-integration |
+| End-to-end demo | manual | docker compose run --rm demo |
