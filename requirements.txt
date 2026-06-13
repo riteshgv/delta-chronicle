@@ -1,6 +1,6 @@
 # Core
-pyspark==3.5.0
-delta-spark==3.2.0
+# pyspark==3.5.0
+# delta-spark==3.2.0
 
 # Data
 pandas==2.1.4

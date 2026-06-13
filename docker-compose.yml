@@ -43,6 +43,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: delta-chronicle-pipeline
+    entrypoint: ""
     volumes:
       - .:/app
       - delta-data:/app/demo/nyc_taxi/delta
