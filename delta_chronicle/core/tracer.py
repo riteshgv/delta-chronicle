@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CausalLink:
     """One step in the causal chain."""
+
     table_name: str
     layer: str
     version: int
@@ -33,11 +34,12 @@ class CausalLink:
 @dataclass
 class TraceResult:
     """Full result of a causality trace."""
+
     symptom_table: str
     symptom_filter: str
     causal_chain: List[CausalLink] = field(default_factory=list)
     root_cause: Optional[CausalLink] = None
-    trace_mode: str = "structural"   # "structural" | "cdf" (Week 3)
+    trace_mode: str = "structural"  # "structural" | "cdf" (Week 3)
 
     def show_chain(self):
         print("\n" + "=" * 55)
@@ -67,8 +69,10 @@ class TraceResult:
             print()
 
         if self.root_cause:
-            print(f"  ✅ Root cause: {self.root_cause.table_name} "
-                  f"at version {self.root_cause.version}")
+            print(
+                f"  ✅ Root cause: {self.root_cause.table_name} "
+                f"at version {self.root_cause.version}"
+            )
         else:
             print("  ⚠️  Root cause undetermined — expand suspect_window")
         print("=" * 55)
@@ -90,10 +94,7 @@ class CausalityTracer:
         self.graph = graph
 
     def trace(
-        self,
-        table: str,
-        filter_expr: str,
-        suspect_window: Optional[tuple] = None
+        self, table: str, filter_expr: str, suspect_window: Optional[tuple] = None
     ) -> TraceResult:
         """
         Trace causality from a symptomatic downstream table back to source.
@@ -119,19 +120,16 @@ class CausalityTracer:
             symptom_filter=filter_expr,
             causal_chain=chain,
             root_cause=root,
-            trace_mode="structural"
+            trace_mode="structural",
         )
 
     def _collect_chain(
-        self,
-        node: "TableNode",
-        chain: List[CausalLink],
-        is_symptom_table: bool = False
+        self, node: "TableNode", chain: List[CausalLink], is_symptom_table: bool = False
     ):
         """Recursive upstream collection."""
         link = self._build_link(node)
         link.is_symptom = is_symptom_table
-        link.is_root_cause = (len(node.upstream) == 0)
+        link.is_root_cause = len(node.upstream) == 0
         chain.append(link)
 
         for upstream_name in node.upstream:
@@ -145,16 +143,17 @@ class CausalityTracer:
         if self.graph.spark:
             try:
                 from delta_chronicle.core._delta_utils import get_table_history
+
                 history = get_table_history(self.graph.spark, node.path)
                 if history:
                     latest = history[0]
-                    version   = latest.get("version", 0)
+                    version = latest.get("version", 0)
                     timestamp = str(latest.get("timestamp", "unknown"))
                     operation = latest.get("operation", "WRITE")
-                    metrics   = latest.get("operationMetrics") or {}
-                    rows      = int(metrics.get("numOutputRows", 0))
-                    params    = latest.get("operationParameters") or {}
-                    job       = params.get("description", "No description")
+                    metrics = latest.get("operationMetrics") or {}
+                    rows = int(metrics.get("numOutputRows", 0))
+                    params = latest.get("operationParameters") or {}
+                    job = params.get("description", "No description")
             except Exception as e:
                 logger.warning(f"Could not read history for {node.name}: {e}")
 

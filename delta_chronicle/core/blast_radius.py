@@ -54,7 +54,9 @@ class BlastRadiusResult:
             print()
 
         print(f"  Total tainted : {len(self.tainted_tables)} tables")
-        print(f"  Recompute     : {sum(1 for t in self.tainted_tables if t.needs_recompute)} tables")
+        print(
+            f"  Recompute     : {sum(1 for t in self.tainted_tables if t.needs_recompute)} tables"
+        )
         print("=" * 55)
 
 
@@ -79,9 +81,7 @@ class BlastRadiusAnalyzer:
         self._walk_downstream(source_table, distance=1, tainted=tainted)
 
         return BlastRadiusResult(
-            source_table=source_table,
-            source_version=version,
-            tainted_tables=tainted
+            source_table=source_table, source_version=version, tainted_tables=tainted
         )
 
     def _walk_downstream(self, table_name: str, distance: int, tainted: list):
@@ -89,12 +89,14 @@ class BlastRadiusAnalyzer:
         for ds_name in downstream:
             node = self.graph.get_node(ds_name)
             rows = self._get_row_count(node)
-            tainted.append(TaintedTable(
-                table_name=ds_name,
-                distance=distance,
-                layer=node.layer,
-                estimated_rows=rows
-            ))
+            tainted.append(
+                TaintedTable(
+                    table_name=ds_name,
+                    distance=distance,
+                    layer=node.layer,
+                    estimated_rows=rows,
+                )
+            )
             self._walk_downstream(ds_name, distance + 1, tainted)
 
     def _get_row_count(self, node) -> int:

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TableNode:
     """Represents one Delta table in the lakehouse DAG."""
+
     name: str
     path: str
     primary_key: str
@@ -50,7 +51,7 @@ class ChronicleGraph:
         path: str,
         primary_key: str,
         upstream: Optional[List[str]] = None,
-        description: str = ""
+        description: str = "",
     ) -> "ChronicleGraph":
         """Register a Delta table. Returns self for fluent chaining."""
         if upstream is None:
@@ -68,7 +69,7 @@ class ChronicleGraph:
             path=path,
             primary_key=primary_key,
             upstream=upstream,
-            description=description
+            description=description,
         )
         self._nodes[name] = node
         logger.info(f"Registered: {name} (layer={node.layer})")
@@ -98,10 +99,7 @@ class ChronicleGraph:
 
     def get_leaf_tables(self) -> List[str]:
         """Tables with no downstream — the sinks of your DAG."""
-        return [
-            n.name for n in self._nodes.values()
-            if not self.get_downstream(n.name)
-        ]
+        return [n.name for n in self._nodes.values() if not self.get_downstream(n.name)]
 
     def validate(self) -> List[str]:
         """
@@ -133,9 +131,7 @@ class ChronicleGraph:
             if nodes:
                 lines.append(f"\n  [{layer.upper()}]")
                 for n in nodes:
-                    upstream_str = (
-                        f"  ← {', '.join(n.upstream)}" if n.upstream else ""
-                    )
+                    upstream_str = f"  ← {', '.join(n.upstream)}" if n.upstream else ""
                     desc = f"  # {n.description}" if n.description else ""
                     lines.append(f"    {n.name}{upstream_str}{desc}")
 
