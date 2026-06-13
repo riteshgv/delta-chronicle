@@ -93,6 +93,18 @@ services:
       - PYTHONPATH=/app:/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.7-src.zip
       - PYSPARK_PYTHON=python3
     command: python3 demo/nyc_taxi/explore_cdf.py
+  test-integration:
+    build: .
+    container_name: delta-chronicle-test-integration
+    entrypoint: ""
+    volumes:
+      - .:/app
+    environment:
+      - SPARK_LOCAL_IP=127.0.0.1
+      - SPARK_HOME=/opt/spark
+      - PYTHONPATH=/app:/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.7-src.zip
+      - PYSPARK_PYTHON=python3
+    command: python3 -m pytest tests/integration/ -v --tb=short
 
 volumes:
   delta-data:
