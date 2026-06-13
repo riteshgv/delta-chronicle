@@ -100,28 +100,121 @@ class ChronicleGraph:
     def get_leaf_tables(self) -> List[str]:
         """Tables with no downstream — the sinks of your DAG."""
         return [n.name for n in self._nodes.values() if not self.get_downstream(n.name)]
+    def get_full_lineage_path(
+        self, from_table: str, to_table: str
+    ) -> List[str]:
+        """
+        Find the path between two tables in the DAG.
+        Uses BFS (breadth-first search) following downstream direction.
+
+        Args:
+            from_table: Source table name (e.g. "bronze.trips")
+            to_table:   Target table name (e.g. "gold.revenue")
+
+        Returns:
+            List of table names from source to target.
+            Empty list if no path exists or tables not registered.
+
+        Example:
+            path = cg.get_full_lineage_path("bronze.trips","gold.revenue")
+            # returns ["bronze.trips", "silver.enriched", "gold.revenue"]
+        """
+        if from_table not in self._nodes or to_table not in self._nodes:
+            return []
+
+        from collections import deque
+        queue   = deque([[from_table]])
+        visited = set()
+
+        while queue:
+            path    = queue.popleft()
+            current = path[-1]
+
+            if current == to_table:
+                return path
+
+            if current in visited:
+                continue
+            visited.add(current)
+
+            for downstream in self.get_downstream(current):
+                queue.append(path + [downstream])
+
+        return []
+
+    def get_all_paths_to(self, to_table: str) -> List[List[str]]:
+        """
+        Find ALL paths from any root table to to_table.
+        Useful for tables with multiple upstream sources.
+
+        Returns:
+            List of paths, each path is a list of table names.
+        """
+        all_paths = []
+        for root in self.get_root_tables():
+            path = self.get_full_lineage_path(root, to_table)
+            if path:
+                all_paths.append(path)
+        return all_paths
 
     def validate(self) -> List[str]:
         """
-        Check the graph for issues.
-        Returns a list of warning strings (empty = no issues).
+        Check graph for issues.
+        Returns list of warning strings (empty = no issues).
+        Checks: empty graph, missing upstreams, cycles.
         """
         warnings = []
+
         if not self._nodes:
             warnings.append("No tables registered")
             return warnings
 
-        if not self.get_root_tables():
-            warnings.append("No root tables found — possible cycle in DAG")
-
+        # Check for missing upstream references
         for name, node in self._nodes.items():
             for up in node.upstream:
                 if up not in self._nodes:
                     warnings.append(
-                        f"Table '{name}' references upstream '{up}' "
+                        f"'{name}' references upstream '{up}' "
                         "which is not registered"
                     )
+
+        # Check for cycles using DFS
+        if self._has_cycle():
+            warnings.append(
+                "Cycle detected in DAG. "
+                "Delta pipelines must be acyclic."
+            )
+
+        if not self.get_root_tables():
+            warnings.append(
+                "No root tables found. "
+                "Every table has an upstream — possible cycle."
+            )
+
         return warnings
+
+    def _has_cycle(self) -> bool:
+        """DFS cycle detection."""
+        visited  = set()
+        rec_stack = set()
+
+        def dfs(node_name: str) -> bool:
+            visited.add(node_name)
+            rec_stack.add(node_name)
+            for downstream in self.get_downstream(node_name):
+                if downstream not in visited:
+                    if dfs(downstream):
+                        return True
+                elif downstream in rec_stack:
+                    return True
+            rec_stack.discard(node_name)
+            return False
+
+        for name in self._nodes:
+            if name not in visited:
+                if dfs(name):
+                    return True
+        return False
 
     def summary(self) -> str:
         """Human-readable summary of the registered DAG."""

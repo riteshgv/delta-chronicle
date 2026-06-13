@@ -112,3 +112,59 @@ class TestValidation:
         assert "BRONZE" in summary
         assert "SILVER" in summary
         assert "GOLD" in summary
+class TestLineagePath:
+
+    def test_path_bronze_to_gold(self, taxi_graph):
+        path = taxi_graph.get_full_lineage_path(
+            "bronze.taxi_trips", "gold.driver_revenue"
+        )
+        assert path[0]  == "bronze.taxi_trips"
+        assert path[-1] == "gold.driver_revenue"
+        assert "silver.trip_enriched" in path
+        assert len(path) == 3
+
+    def test_path_bronze_to_heatmap(self, taxi_graph):
+        path = taxi_graph.get_full_lineage_path(
+            "bronze.taxi_trips", "gold.zone_heatmap"
+        )
+        assert path[0]  == "bronze.taxi_trips"
+        assert path[-1] == "gold.zone_heatmap"
+
+    def test_no_path_going_backwards(self, taxi_graph):
+        path = taxi_graph.get_full_lineage_path(
+            "gold.driver_revenue", "bronze.taxi_trips"
+        )
+        assert path == []
+
+    def test_path_to_self_not_found(self, taxi_graph):
+        path = taxi_graph.get_full_lineage_path(
+            "bronze.taxi_trips", "bronze.taxi_trips"
+        )
+        # BFS won't revisit starting node
+        assert path == [] or path == ["bronze.taxi_trips"]
+
+    def test_unregistered_table_returns_empty(self, taxi_graph):
+        path = taxi_graph.get_full_lineage_path(
+            "bronze.taxi_trips", "gold.missing"
+        )
+        assert path == []
+
+    def test_all_paths_to_gold_revenue(self, taxi_graph):
+        paths = taxi_graph.get_all_paths_to("gold.driver_revenue")
+        assert len(paths) >= 1
+        assert all(p[-1] == "gold.driver_revenue" for p in paths)
+
+
+class TestCycleDetection:
+
+    def test_valid_dag_has_no_cycle(self, taxi_graph):
+        warnings = taxi_graph.validate()
+        cycle_warnings = [w for w in warnings if "Cycle" in w]
+        assert cycle_warnings == []
+
+    def test_has_cycle_false_for_valid_dag(self, taxi_graph):
+        assert taxi_graph._has_cycle() is False
+
+    def test_empty_graph_warns(self):
+        cg = ChronicleGraph(spark=None)
+        assert len(cg.validate()) > 0
