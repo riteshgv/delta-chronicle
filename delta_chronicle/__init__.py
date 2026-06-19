@@ -23,5 +23,12 @@ __license__ = "Apache-2.0"
 from delta_chronicle.core.graph import ChronicleGraph
 from delta_chronicle.core.tracer import CausalityTracer
 from delta_chronicle.core.blast_radius import BlastRadiusAnalyzer
+from delta_chronicle.gdpr import ForgetPropagator, ForgetAuditReport
 
-__all__ = ["ChronicleGraph", "CausalityTracer", "BlastRadiusAnalyzer"]
+__all__ = [
+    "ChronicleGraph",
+    "CausalityTracer",
+    "BlastRadiusAnalyzer",
+    "ForgetPropagator",
+    "ForgetAuditReport",
+]
